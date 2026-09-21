@@ -25,6 +25,9 @@ function onOpen() {
     .addItem('アプリを開く', 'openApp')
     .addSeparator()
     .addItem('初期セットアップ（シート作成）', 'setup')
+    .addSeparator()
+    .addItem('外部連携用の合言葉を発行', 'issueApiToken')
+    .addItem('外部連携用の合言葉を確認', 'showApiToken')
     .addToUi();
 }
 

@@ -1,0 +1,10 @@
+# フォルダをドラッグ＆ドロップでデプロイする場合は netlify.toml が読まれないため、
+# 同じ内容をこちらにも置いておく。
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://script.google.com https://script.googleusercontent.com; manifest-src 'self'
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

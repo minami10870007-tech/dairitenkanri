@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="auto">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="description" content="紹介者と紹介案件を管理するシンプルなアプリ。データは Google スプレッドシートに保存されます。" />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="紹介者管理" />
+<title>紹介者管理</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M16 8.5a3.8 3.8 0 1 1 0 7.6 3.8 3.8 0 0 1 0-7.6Zm0 9.4c4.2 0 7.6 2.2 7.6 4.9v1.2H8.4v-1.2c0-2.7 3.4-4.9 7.6-4.9Z' fill='%23fff'/%3E%3C/svg%3E" />
+<style>
+/* =========================================================================
+   1. デザイントークン
+   ========================================================================= */
+:root {
+  /* 色（ライト） */
+  --bg: #f6f7f9;
+  --bg-elev: #ffffff;
+  --bg-sunken: #eef0f4;
+  --bg-hover: #f1f3f7;
+  --text: #16181d;
+  --text-muted: #5a6172;
+  --text-faint: #636b7a;   /* #fff で 5.36:1、--bg で 5.00:1（AA 合格） */
+  --border: #e2e5ec;
+  --border-strong: #cfd4de;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #eef0ff;
+  --accent-text: #3730a3;
+  --on-accent: #ffffff;
+  --ok-bg: #e7f6ec;   --ok-text: #14683a;   --ok-border: #bfe6cd;
+  --warn-bg: #fff4e2; --warn-text: #8a4b06;  --warn-border: #f7dcb4;
+  --info-bg: #e8f0fe; --info-text: #1b4fa8;  --info-border: #c6d9fb;
+  --danger-bg: #fdeceb; --danger-text: #ab2418; --danger-border: #f6cdc9;
+  --danger-solid: #b3201c; --on-danger: #ffffff; /* 白文字で 6.69:1 */
+  --neutral-bg: #eceef2; --neutral-text: #4b5263; --neutral-border: #dcdfe6;
+
+  /* 角丸 */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-full: 999px;
+
+  /* 影 */
+  --shadow-sm: 0 1px 2px rgba(16, 20, 32, .06), 0 1px 3px rgba(16, 20, 32, .04);
+  --shadow-md: 0 2px 6px rgba(16, 20, 32, .07), 0 8px 24px rgba(16, 20, 32, .06);
+  --shadow-lg: 0 12px 40px rgba(16, 20, 32, .16);
+
+  /* 余白（8px グリッド） */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+
+  /* 文字 */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
+          "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", Meiryo, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: clamp(20px, 4.2vw, 24px);
+  --fs-display: clamp(26px, 7vw, 34px);
+
+  /* レイアウト */
+  --header-h: 60px;
+  --tabbar-h: 62px;
+  --gutter: clamp(16px, 4vw, 32px);
+  --maxw: 1120px;
+  --tap: 44px; /* 最小タップ領域 */
+}
+
+/* 色（ダーク）。OS 設定と、手動切り替え（data-theme）の両方に対応する */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --bg-elev: #171a21;
+    --bg-sunken: #1d212a;
+    --bg-hover: #212632;
+    --text: #edeff4;
+    --text-muted: #a3abbb;
+    --text-faint: #959db0;  /* ダーク背景で 5.93:1 以上 */
+    --border: #272c37;
+    --border-strong: #39404e;
+    --accent: #8b87ff;
+    --accent-hover: #a29dff;
+    --accent-soft: #232236;
+    --accent-text: #c9c6ff;
+    --on-accent: #17162b;
+    --ok-bg: #12291c;   --ok-text: #8ce0ab;   --ok-border: #1f4230;
+    --warn-bg: #2d2109; --warn-text: #f4c982;  --warn-border: #4a3612;
+    --info-bg: #111f38; --info-text: #a8c8ff;  --info-border: #1d3358;
+    --danger-bg: #331512; --danger-text: #ffaba3; --danger-border: #55221d;
+    --danger-solid: #d0342c; --on-danger: #ffffff; /* 白文字で 4.99:1 */
+    --neutral-bg: #21262f; --neutral-text: #b3bac7; --neutral-border: #303642;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, .45);
+    --shadow-lg: 0 16px 44px rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --bg-elev: #171a21;
+  --bg-sunken: #1d212a;
+  --bg-hover: #212632;
+  --text: #edeff4;
+  --text-muted: #a3abbb;
+  --text-faint: #959db0;
+  --border: #272c37;
+  --border-strong: #39404e;
+  --accent: #8b87ff;
+  --accent-hover: #a29dff;
+  --accent-soft: #232236;
+  --accent-text: #c9c6ff;
+  --on-accent: #17162b;
+  --ok-bg: #12291c;   --ok-text: #8ce0ab;   --ok-border: #1f4230;
+  --warn-bg: #2d2109; --warn-text: #f4c982;  --warn-border: #4a3612;
+  --info-bg: #111f38; --info-text: #a8c8ff;  --info-border: #1d3358;
+  --danger-bg: #331512; --danger-text: #ffaba3; --danger-border: #55221d;
+  --danger-solid: #d0342c; --on-danger: #ffffff;
+  --neutral-bg: #21262f; --neutral-text: #b3bac7; --neutral-border: #303642;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 16px 44px rgba(0, 0, 0, .6);
+}
+
+/* =========================================================================
+   2. ベース
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100svh;
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3 { margin: 0; line-height: 1.35; font-weight: 700; }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+svg { display: block; flex: none; }
+[hidden] { display: none !important; }
+
+:where(a) { color: var(--accent); text-underline-offset: 2px; }
+
+/* フォーカスリング（キーボード操作時のみ） */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.sr-only {
+  /* position:absolute だと静的位置のぶん親からはみ出し、ページに横スクロールが出る。
+     fixed なら配置の影響をまったく受けない */
+  position: fixed; top: 0; left: 0;
+  width: 1px; height: 1px; padding: 0; margin: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+/* =========================================================================
+   3. ヘッダー
+   ========================================================================= */
+.app-header {
+  /* backdrop-filter は使わない：filter 系プロパティを持つ要素は position:fixed の子孫の
+     包含ブロックになるため、スマホの下部固定タブバーがヘッダー内に閉じ込められてしまう */
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+.app-header__inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  min-height: var(--header-h);
+  padding: var(--sp-2) var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
+.brand__mark {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #22d3ee));
+  color: #fff;
+  display: grid; place-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.brand__mark svg { width: 19px; height: 19px; }
+.brand__text { min-width: 0; }
+.brand__title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-actions { display: flex; align-items: center; gap: var(--sp-1); }
+
+/* =========================================================================
+   4. ボタン類
+   ========================================================================= */
+.btn {
+  -webkit-appearance: none; appearance: none;
+  font: inherit;
+  font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: var(--bg-elev);
+  color: var(--text);
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .12s ease, opacity .18s ease;
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(1px); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; transform: none; }
+.btn--primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-sm); }
+.btn--primary:hover:not([disabled]) { background: var(--accent-hover); }
+.btn--ghost { background: transparent; border-color: var(--border-strong); color: var(--text); }
+.btn--ghost:hover:not([disabled]) { background: var(--bg-hover); }
+.btn--quiet { background: transparent; color: var(--text-muted); }
+.btn--quiet:hover:not([disabled]) { background: var(--bg-hover); color: var(--text); }
+.btn--danger { background: transparent; border-color: var(--danger-border); color: var(--danger-text); }
+.btn--danger:hover:not([disabled]) { background: var(--danger-bg); }
+.btn--danger-solid { background: var(--danger-solid); color: var(--on-danger); border-color: transparent; }
+.btn--danger-solid:hover:not([disabled]) { background: color-mix(in srgb, var(--danger-solid) 86%, #000); }
+.btn--block { width: 100%; }
+.btn--icon {
+  width: var(--tap); min-width: var(--tap); height: var(--tap);
+  padding: 0; border-radius: var(--r-md);
+  background: transparent; color: var(--text-muted);
+}
+.btn--icon:hover { background: var(--bg-hover); color: var(--text); }
+.btn--icon svg { width: 20px; height: 20px; }
+.btn__spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid currentColor; border-top-color: transparent;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* =========================================================================
+   5. タブ（PC はヘッダー下のセグメント / スマホは下部バー）
+   ========================================================================= */
+.tabs {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter) var(--sp-2);
+  display: flex;
+  gap: var(--sp-1);
+}
+.tab {
+  -webkit-appearance: none; appearance: none;
+  font: inherit; font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  min-height: var(--tap);
+  padding: 9px 16px;
+  display: inline-flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.tab svg { width: 18px; height: 18px; }
+.tab:hover { background: var(--bg-hover); color: var(--text); }
+.tab[aria-selected="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.tab__badge {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-text);
+  border-radius: var(--r-full);
+  padding: 1px 8px;
+}
+
+/* =========================================================================
+   6. 本体レイアウト
+   ========================================================================= */
+.main {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--sp-6) var(--gutter) var(--sp-10);
+}
+.panel { animation: fade .22s ease both; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.card__head {
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+}
+.card__title { font-size: var(--fs-lg); }
+.card__hint { font-size: var(--fs-sm); color: var(--text-muted); }
+.card__body { padding: var(--sp-5); }
+
+.section-title {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  margin-bottom: var(--sp-3);
+}
+
+/* =========================================================================
+   7. フォーム
+   ========================================================================= */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-4);
+}
+.field { min-width: 0; }
+.field--full { grid-column: 1 / -1; }
+.field__label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--fs-sm); font-weight: 600; color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.field__req {
+  font-size: var(--fs-xs); font-weight: 700;
+  color: var(--danger-text); background: var(--danger-bg);
+  border-radius: var(--r-full); padding: 1px 7px;
+}
+.field__help { font-size: var(--fs-xs); color: var(--text-faint); margin-top: 5px; }
+.field__error { font-size: var(--fs-xs); color: var(--danger-text); margin-top: 5px; font-weight: 600; }
+
+.input, .select, .textarea {
+  -webkit-appearance: none; appearance: none;
+  font: inherit;
+  font-size: var(--fs-md); /* iOS の自動ズーム防止のため 16px 以上 */
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 14px;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+.input::placeholder, .textarea::placeholder { color: var(--text-faint); }
+.input:hover, .select:hover, .textarea:hover { border-color: var(--text-faint); }
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.input[aria-invalid="true"] { border-color: var(--danger-text); }
+.select {
+  padding-right: 40px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% + 2px), calc(100% - 14px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.form-actions {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border);
+  display: flex; gap: var(--sp-3); flex-wrap: wrap;
+}
+.form-actions .btn--primary { flex: 1 1 200px; }
+
+/* =========================================================================
+   8. 検索・フィルタ
+   ========================================================================= */
+.toolbar { display: grid; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.search { position: relative; display: flex; align-items: center; }
+.search__icon {
+  position: absolute; left: 14px; width: 18px; height: 18px;
+  color: var(--text-faint); pointer-events: none;
+}
+.search .input { padding-left: 42px; padding-right: 46px; }
+.search__clear {
+  position: absolute; right: 4px;
+  width: 36px; height: 36px; min-width: 36px;
+}
+.search__clear svg { width: 16px; height: 16px; }
+
+.chips {
+  display: flex; gap: var(--sp-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  margin: 0 calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
+}
+.chips::-webkit-scrollbar { display: none; }
+/* 右端をぼかして、横にスクロールできることを示す */
+@media (max-width: 719px) {
+  .chips {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  .chips.is-scroll-end {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+.chip {
+  -webkit-appearance: none; appearance: none;
+  font: inherit; font-size: var(--fs-sm); font-weight: 600;
+  flex: none;
+  min-height: var(--tap);
+  padding: 9px 15px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elev);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.chip:hover { background: var(--bg-hover); color: var(--text); }
+.chip[aria-pressed="true"] {
+  background: var(--text); color: var(--bg-elev); border-color: var(--text);
+}
+.chip__count {
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
+  opacity: .8;
+}
+.toolbar__row { display: flex; gap: var(--sp-2); align-items: center; }
+.toolbar__row .select { flex: 1 1 auto; max-width: 220px; }
+.result-count {
+  font-size: var(--fs-sm); color: var(--text-muted);
+  margin-left: auto; font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================================
+   9. ステータス表示（プルダウン兼バッジ）
+   ========================================================================= */
+/* ステータス変更用のプルダウン。見た目はバッジ、機能は select のまま */
+.select--status {
+  border-radius: var(--r-full);
+  font-weight: 700;
+  font-size: var(--fs-md); /* 16px 未満だと iOS が自動ズームする */
+  min-width: 118px;
+  padding: 8px 34px 8px 14px;
+  background-position: calc(100% - 18px) calc(50% + 2px), calc(100% - 12px) calc(50% + 2px);
+}
+.select--status:hover { border-color: currentColor; }
+.select--status.is-new { background-color: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
+.select--status.is-prog { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
+.select--status.is-won { background-color: var(--ok-bg); color: var(--ok-text); border-color: var(--ok-border); }
+.select--status.is-lost { background-color: var(--neutral-bg); color: var(--neutral-text); border-color: var(--neutral-border); }
+.select--status option { background: var(--bg-elev); color: var(--text); font-weight: 600; }
+
+/* =========================================================================
+   10. 一覧（PC：テーブル / スマホ：カード）
+   ========================================================================= */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); }
+.table th, .table td {
+  text-align: left; padding: 12px var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--bg-sunken);
+  font-size: var(--fs-xs); font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr { transition: background .15s ease; }
+.table tbody tr:hover { background: var(--bg-hover); }
+.table .cell-id { font-variant-numeric: tabular-nums; color: var(--text-faint); white-space: nowrap; }
+.table .cell-date { white-space: nowrap; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.table .cell-name { font-weight: 700; color: var(--text); }
+.table .cell-note { color: var(--text-muted); max-width: 26ch; }
+.table .cell-actions { text-align: right; white-space: nowrap; }
+.table .select { min-height: var(--tap); font-size: var(--fs-md); }
+
+.list-cards { display: grid; gap: var(--sp-3); }
+.row-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+.row-card__top { display: flex; align-items: flex-start; gap: var(--sp-3); }
+.row-card__name { font-size: var(--fs-md); font-weight: 700; word-break: break-word; }
+.row-card__id {
+  font-size: var(--fs-xs); color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.row-card__meta { margin-top: var(--sp-3); display: grid; gap: 7px; }
+.meta-line { display: flex; gap: var(--sp-2); font-size: var(--fs-sm); align-items: flex-start; }
+.meta-line__icon { width: 16px; height: 16px; color: var(--text-faint); margin-top: 3px; }
+.meta-line__value { color: var(--text-muted); word-break: break-word; min-width: 0; }
+.meta-line__value a { color: inherit; }
+.row-card__foot {
+  margin-top: var(--sp-4); padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.row-card__foot .select { flex: 1 1 auto; max-width: 240px; }
+.row-card__foot .btn--icon { margin-left: auto; }
+.row-card__foot-label {
+  font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted);
+  flex: none;
+}
+
+/* =========================================================================
+   11. 集計
+   ========================================================================= */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-6);
+}
+.kpi--total { grid-column: 1 / -1; }
+@media (min-width: 560px) {
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .kpi--total { grid-column: auto; }
+}
+.kpi {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+.kpi__label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted);
+}
+.kpi__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.kpi__value {
+  margin-top: 6px;
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+.kpi__unit { font-size: var(--fs-sm); font-weight: 600; color: var(--text-faint); margin-left: 3px; }
+.kpi--total {
+  background: linear-gradient(150deg, var(--accent-soft), var(--bg-elev) 70%);
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--border));
+}
+
+.rank { display: grid; gap: var(--sp-3); }
+.rank__item {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.rank__head { display: flex; align-items: baseline; gap: var(--sp-3); }
+.rank__no {
+  font-size: var(--fs-xs); font-weight: 700; color: var(--text-faint);
+  font-variant-numeric: tabular-nums; min-width: 2.2em;
+}
+.rank__name { font-weight: 700; word-break: break-word; flex: 1 1 auto; min-width: 0; }
+.rank__count { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rank__count span { font-size: var(--fs-xs); color: var(--text-faint); font-weight: 600; }
+.bar {
+  margin-top: var(--sp-3);
+  height: 8px; border-radius: var(--r-full);
+  background: var(--bg-sunken);
+  overflow: hidden;
+  display: flex;
+}
+.bar__seg { height: 100%; transition: width .4s ease; }
+.bar__seg--won { background: var(--ok-text); }
+.bar__seg--prog { background: var(--info-text); }
+.bar__seg--new { background: var(--warn-text); }
+.bar__seg--lost { background: var(--neutral-text); }
+.rank__legend {
+  margin-top: var(--sp-3);
+  display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-xs); color: var(--text-muted);
+}
+.rank__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rank__legend i { width: 8px; height: 8px; border-radius: 50%; }
+
+/* =========================================================================
+   12. 空・読み込み・エラー表示
+   ========================================================================= */
+.empty { text-align: center; padding: var(--sp-10) var(--sp-4); }
+.empty__icon {
+  width: 56px; height: 56px; margin: 0 auto var(--sp-4);
+  border-radius: var(--r-xl);
+  background: var(--bg-sunken);
+  color: var(--text-faint);
+  display: grid; place-items: center;
+}
+.empty__icon svg { width: 26px; height: 26px; }
+.empty__title { font-size: var(--fs-md); font-weight: 700; }
+.empty__text { margin-top: 6px; font-size: var(--fs-sm); color: var(--text-muted); }
+.empty__action { margin-top: var(--sp-5); display: inline-flex; }
+
+.skeleton { display: grid; gap: var(--sp-3); }
+.skeleton__row {
+  height: 74px; border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, var(--bg-elev) 25%, var(--bg-sunken) 37%, var(--bg-elev) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+.notice {
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  display: flex; gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+}
+.notice svg { width: 18px; height: 18px; margin-top: 2px; }
+.notice--warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+.notice--danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+.notice strong { font-weight: 700; }
+
+/* =========================================================================
+   13. トースト
+   ========================================================================= */
+.toasts {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-3));
+  width: min(440px, calc(100vw - var(--sp-8)));
+  display: grid; gap: var(--sp-2);
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: 12px var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-sm);
+  animation: toast-in .24s ease both;
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.toast svg { width: 18px; height: 18px; margin-top: 2px; }
+.toast__text { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+.toast--ok { border-color: var(--ok-border); background: var(--ok-bg); color: var(--ok-text); }
+.toast--err { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger-text); }
+.toast__close { width: 28px; min-width: 28px; height: 28px; }
+.toast__close svg { width: 14px; height: 14px; }
+
+/* =========================================================================
+   14. ダイアログ
+   ========================================================================= */
+dialog {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-elev);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  width: min(480px, calc(100vw - var(--sp-8)));
+  max-height: 86svh;
+  overflow: auto;
+}
+dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px); }
+.dialog__head { padding: var(--sp-5) var(--sp-5) 0; }
+.dialog__title { font-size: var(--fs-lg); }
+.dialog__body { padding: var(--sp-4) var(--sp-5); display: grid; gap: var(--sp-4); }
+.dialog__body p { font-size: var(--fs-sm); color: var(--text-muted); }
+.dialog__foot {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  display: flex; gap: var(--sp-3); flex-wrap: wrap;
+}
+.dialog__foot .btn { flex: 1 1 120px; }
+
+/* =========================================================================
+   15. レスポンシブ
+   ========================================================================= */
+/* --- スマホ（〜719px）：タブを下部バーに、テーブルはカードに --- */
+@media (max-width: 719px) {
+  .tabs {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 40;
+    padding: 6px var(--sp-2);
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg-elev) 94%, transparent);
+    backdrop-filter: saturate(160%) blur(12px);
+    border-top: 1px solid var(--border);
+    gap: 0;
+  }
+  .tab {
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 52px;
+    padding: 5px 2px;
+    border-radius: var(--r-md);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    background: transparent;
+  }
+  .tab[aria-selected="true"] { background: var(--accent-soft); }
+  .tab svg { width: 21px; height: 21px; }
+  .tab__badge { display: none; }
+  .main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-8)); }
+  .card--flush { border: 0; background: transparent; box-shadow: none; border-radius: 0; }
+  .card--flush > .card__head { padding: 0 0 var(--sp-3); border-bottom: 0; }
+  .card--flush > .card__body { padding: 0; }
+  .form-actions { flex-direction: column; }
+  .form-actions .btn { width: 100%; }
+}
+/* --- タブレット以上：カード表示をやめてテーブルに --- */
+/* 表は横スクロールせずに収まる幅から。それ未満はカード表示 */
+@media (max-width: 879px) { .table-wrap { display: none; } }
+@media (min-width: 880px) { .list-cards { display: none; } }
+@media (min-width: 720px) {
+  .chips { margin: 0; padding-inline: 0; flex-wrap: wrap; overflow-x: visible; }
+}
+@media (min-width: 1000px) {
+  .toolbar { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); align-items: center; }
+  .toolbar__row { grid-column: 1 / -1; }
+  .toolbar .chips { justify-content: flex-end; }
+}
+/* --- 大きい画面：登録フォームと注意書きを横並びに --- */
+@media (min-width: 900px) {
+  .form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: var(--sp-5); align-items: start; }
+  /* 幅広の画面で棒グラフが間延びしないよう2列に */
+  .rank { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* --- 横向きの低い画面：ヘッダーを詰める --- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .app-header { position: static; }
+  :root { --header-h: 48px; }
+}
+/* --- 印刷 --- */
+@media print {
+  .app-header, .tabs, .toolbar, .toasts, .cell-actions, .row-card__foot { display: none !important; }
+  .main { padding: 0; max-width: none; }
+  .card { border: 0; box-shadow: none; }
+  .list-cards { display: grid !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- アイコン定義 -->
+<svg hidden aria-hidden="true">
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M12 5v14M5 12h14" />
+  </symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+  </symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 3v18h18" /><path d="M7 15v3M12 9v9M17 5v13" />
+  </symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+    <circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" />
+  </symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round">
+    <path d="M18 6 6 18M6 6l12 12" />
+  </symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12a9 9 0 1 1-3.2-6.9" /><path d="M21 3v6h-6" />
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="4.2" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" />
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.8 6.8 0 0 0 9.8 9.8Z" />
+  </symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.4-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.4l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4Z" />
+  </symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.6 3h3l1.5 4-2 1.3a12 12 0 0 0 5.6 5.6l1.3-2 4 1.5v3A2.6 2.6 0 0 1 17.4 19 14.4 14.4 0 0 1 5 6.6A2.6 2.6 0 0 1 6.6 3Z" />
+  </symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2.4" /><path d="m3.6 6.6 8.4 6 8.4-6" />
+  </symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </symbol>
+  <symbol id="i-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M15 3v5h5M8 13h8M8 17h5" />
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m4 12.5 5 5L20 6.5" />
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9" /><path d="M12 7.5v6M12 16.5h.01" />
+  </symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12h5l1.5 3h5L16 12h5" /><path d="M5.5 5h13l2.5 7v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z" />
+  </symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 3v6M15 3v6M6 9h12v3a6 6 0 0 1-12 0Z" /><path d="M12 18v3" />
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.8 12.2A2 2 0 0 0 9.3 21h5.4a2 2 0 0 0 2-1.8L17.5 7" />
+  </symbol>
+</svg>
+
+<header class="app-header">
+  <div class="app-header__inner">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true"><svg><use href="#i-user" /></svg></span>
+      <span class="brand__text">
+        <span class="brand__title">紹介者管理</span>
+        <span class="brand__sub" id="conn-label">未接続</span>
+      </span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--icon" id="btn-refresh" type="button" title="再読み込み">
+        <svg aria-hidden="true"><use href="#i-refresh" /></svg><span class="sr-only">データを再読み込み</span>
+      </button>
+      <button class="btn btn--icon" id="btn-theme" type="button" title="配色を切り替え">
+        <svg aria-hidden="true" id="icon-theme"><use href="#i-moon" /></svg><span class="sr-only">配色を切り替え</span>
+      </button>
+      <button class="btn btn--icon" id="btn-settings" type="button" title="接続設定">
+        <svg aria-hidden="true"><use href="#i-settings" /></svg><span class="sr-only">接続設定を開く</span>
+      </button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="画面切り替え">
+    <button class="tab" role="tab" id="tab-form" aria-controls="panel-form" aria-selected="false" type="button">
+      <svg aria-hidden="true"><use href="#i-plus" /></svg><span>新規登録</span>
+    </button>
+    <button class="tab" role="tab" id="tab-list" aria-controls="panel-list" aria-selected="true" type="button">
+      <svg aria-hidden="true"><use href="#i-list" /></svg><span>一覧</span>
+      <span class="tab__badge" id="tab-count" hidden>0</span>
+    </button>
+    <button class="tab" role="tab" id="tab-summary" aria-controls="panel-summary" aria-selected="false" type="button">
+      <svg aria-hidden="true"><use href="#i-chart" /></svg><span>集計</span>
+    </button>
+  </nav>
+</header>
+
+<main class="main">
+  <!-- 未接続のときの案内 -->
+  <section id="panel-setup" hidden>
+    <div class="card">
+      <div class="card__head">
+        <h1 class="card__title">最初に接続設定をします</h1>
+      </div>
+      <div class="card__body">
+        <p class="card__hint" style="margin-bottom:var(--sp-5)">
+          スプレッドシート側で発行した「ウェブアプリの URL」と「合言葉」を入れてください。
+          入力内容はこのブラウザだけに保存され、サーバーには送られません。
+        </p>
+        <button class="btn btn--primary btn--block" id="btn-open-settings" type="button">
+          <svg aria-hidden="true" style="width:18px;height:18px"><use href="#i-plug" /></svg>
+          接続設定を開く
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 新規登録 -->
+  <section class="panel" id="panel-form" role="tabpanel" aria-labelledby="tab-form" tabindex="-1" hidden>
+    <div class="form-layout">
+      <form class="card" id="form" novalidate>
+        <div class="card__head">
+          <h1 class="card__title">紹介者を登録</h1>
+          <span class="card__hint">紹介者名だけ必須です</span>
+        </div>
+        <div class="card__body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="field__label" for="f-name">紹介者名 <span class="field__req">必須</span></label>
+              <input class="input" id="f-name" name="name" type="text" placeholder="山田 太郎"
+                     autocomplete="name" enterkeyhint="next" aria-describedby="f-name-error" required />
+              <p class="field__error" id="f-name-error" hidden>紹介者名を入力してください。</p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-status">ステータス</label>
+              <select class="select" id="f-status" name="status"></select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-tel">電話番号</label>
+              <input class="input" id="f-tel" name="tel" type="tel" inputmode="tel"
+                     placeholder="090-0000-0000" autocomplete="tel" enterkeyhint="next" />
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-mail">メール</label>
+              <input class="input" id="f-mail" name="mail" type="email" inputmode="email"
+                     placeholder="taro@example.com" autocomplete="email" enterkeyhint="next" />
+            </div>
+            <div class="field field--full">
+              <label class="field__label" for="f-target">被紹介者</label>
+              <input class="input" id="f-target" name="target" type="text"
+                     placeholder="株式会社サンプル 鈴木様" enterkeyhint="next" />
+              <p class="field__help">紹介された人・会社を入れます。</p>
+            </div>
+            <div class="field field--full">
+              <label class="field__label" for="f-note">備考</label>
+              <textarea class="textarea" id="f-note" name="note" placeholder="紹介の経緯やメモ"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--primary" id="btn-save" type="submit">
+              <svg aria-hidden="true" style="width:18px;height:18px"><use href="#i-check" /></svg>
+              <span>登録する</span>
+            </button>
+            <button class="btn btn--ghost" id="btn-clear" type="reset">クリア</button>
+          </div>
+        </div>
+      </form>
+      <aside class="notice" style="margin-top:var(--sp-4)">
+        <svg aria-hidden="true"><use href="#i-alert" /></svg>
+        <span>
+          登録すると <strong>スプレッドシートの「紹介者」シート</strong> に1行追加されます。
+          ID は <strong>R0001</strong> 形式で自動採番されます。
+        </span>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 一覧 -->
+  <section class="panel" id="panel-list" role="tabpanel" aria-labelledby="tab-list" tabindex="-1">
+    <div class="card card--flush">
+      <div class="card__head">
+        <h1 class="card__title">紹介者一覧</h1>
+      </div>
+      <div class="card__body">
+        <div class="toolbar">
+          <div class="search">
+            <svg class="search__icon" aria-hidden="true"><use href="#i-search" /></svg>
+            <label class="sr-only" for="q">紹介者名・被紹介者・電話・メール・備考で検索</label>
+            <input class="input" id="q" type="search" placeholder="名前・会社・電話・メモで検索"
+                   autocomplete="off" enterkeyhint="search" />
+            <button class="btn btn--icon search__clear" id="btn-clear-q" type="button" hidden>
+              <svg aria-hidden="true"><use href="#i-x" /></svg><span class="sr-only">検索条件を消す</span>
+            </button>
+          </div>
+          <div class="chips" id="status-chips" role="group" aria-label="ステータスで絞り込み"></div>
+          <div class="toolbar__row">
+            <label class="sr-only" for="sort">並び順</label>
+            <select class="select" id="sort">
+              <option value="new">新しい順</option>
+              <option value="old">古い順</option>
+              <option value="name">紹介者名順</option>
+            </select>
+            <span class="result-count" id="result-count" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div id="list-skeleton" class="skeleton" hidden>
+          <div class="skeleton__row"></div><div class="skeleton__row"></div><div class="skeleton__row"></div>
+        </div>
+
+        <div id="list-region" aria-live="polite">
+          <div class="table-wrap" id="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">登録日</th>
+                  <th scope="col">紹介者名</th>
+                  <th scope="col">連絡先</th>
+                  <th scope="col">被紹介者</th>
+                  <th scope="col">ステータス</th>
+                  <th scope="col">備考</th>
+                  <th scope="col"><span class="sr-only">操作</span></th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+          <div class="list-cards" id="list-cards"></div>
+          <div id="list-empty" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 集計 -->
+  <section class="panel" id="panel-summary" role="tabpanel" aria-labelledby="tab-summary" tabindex="-1" hidden>
+    <div class="card card--flush">
+      <div class="card__head">
+        <h1 class="card__title">集計</h1>
+      </div>
+      <div class="card__body">
+        <div class="kpis" id="kpis"></div>
+        <h2 class="section-title">紹介者ごとの実績</h2>
+        <div class="rank" id="rank"></div>
+        <div id="summary-empty" hidden></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<!-- 接続設定 -->
+<dialog id="dlg-settings" aria-labelledby="dlg-settings-title">
+  <form method="dialog" id="form-settings">
+    <div class="dialog__head"><h2 class="dialog__title" id="dlg-settings-title">接続設定</h2></div>
+    <div class="dialog__body">
+      <div class="field">
+        <label class="field__label" for="s-url">ウェブアプリの URL</label>
+        <input class="input" id="s-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+               placeholder="https://script.google.com/macros/s/xxx/exec" />
+        <p class="field__help">Apps Script の「デプロイ → ウェブアプリ」で表示される、<code>/exec</code> で終わる URL。</p>
+      </div>
+      <div class="field">
+        <label class="field__label" for="s-token">合言葉</label>
+        <input class="input" id="s-token" type="password" autocomplete="off" spellcheck="false"
+               placeholder="スプレッドシートのメニューで発行した文字列" />
+        <p class="field__help">スプレッドシートのメニュー「紹介者管理 → 外部連携用の合言葉を発行」で作れます。</p>
+      </div>
+      <p class="field__error" id="s-error" hidden></p>
+      <div class="notice">
+        <svg aria-hidden="true"><use href="#i-alert" /></svg>
+        <span>URL と合言葉はこの端末のブラウザ（localStorage）に保存されます。共有端末では使い終わったら「接続を解除」してください。</span>
+      </div>
+    </div>
+    <div class="dialog__foot">
+      <button class="btn btn--primary" id="btn-connect" type="button">
+        <span>接続する</span>
+      </button>
+      <button class="btn btn--ghost" value="cancel" type="submit">閉じる</button>
+      <button class="btn btn--danger btn--block" id="btn-disconnect" type="button">接続を解除</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 削除確認 -->
+<dialog id="dlg-delete" aria-labelledby="dlg-delete-title">
+  <form method="dialog">
+    <div class="dialog__head"><h2 class="dialog__title" id="dlg-delete-title">この紹介者を削除しますか？</h2></div>
+    <div class="dialog__body">
+      <p id="dlg-delete-target"></p>
+      <div class="notice notice--danger">
+        <svg aria-hidden="true"><use href="#i-alert" /></svg>
+        <span>スプレッドシートの行も削除されます。元に戻せません。</span>
+      </div>
+    </div>
+    <div class="dialog__foot">
+      <button class="btn btn--ghost" value="cancel" type="submit">やめる</button>
+      <button class="btn btn--danger-solid" id="btn-delete-ok" type="button">削除する</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================================
+     設定・状態
+     ===================================================================== */
+  var LS = { url: 'refmgr.apiUrl', token: 'refmgr.token', theme: 'refmgr.theme' };
+  var STATUS_CLASS = { '未対応': 'new', '対応中': 'prog', '成約': 'won', '見送り': 'lost' };
+  var DEMO = new URLSearchParams(location.search).has('demo');
+
+  var state = {
+    statuses: ['未対応', '対応中', '成約', '見送り'],
+    rows: [],
+    query: '',
+    status: '',
+    sort: 'new',
+    view: 'list',
+    loading: false,
+    connected: false
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var chipScrollUpdate = function () {};
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+  function icon(name, className) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    if (className) svg.setAttribute('class', className);
+    svg.setAttribute('aria-hidden', 'true');
+    var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  function store(key, value) {
+    try {
+      if (value === undefined) return localStorage.getItem(key);
+      if (value === null) { localStorage.removeItem(key); return null; }
+      localStorage.setItem(key, value);
+      return value;
+    } catch (e) { return null; } // プライベートモード等で使えない場合
+  }
+
+  /* =====================================================================
+     配色（自動 / ライト / ダーク）
+     ===================================================================== */
+  function applyTheme(mode) {
+    var root = document.documentElement;
+    root.setAttribute('data-theme', mode);
+    var dark = mode === 'dark' ||
+      (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    $('icon-theme').firstChild.setAttribute('href', dark ? '#i-sun' : '#i-moon');
+    $('btn-theme').setAttribute('title', dark ? 'ライトに切り替え' : 'ダークに切り替え');
+  }
+  applyTheme(store(LS.theme) || 'auto');
+  $('btn-theme').addEventListener('click', function () {
+    var now = document.documentElement.getAttribute('data-theme');
+    var dark = now === 'dark' ||
+      (now === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    store(LS.theme, next);
+    applyTheme(next);
+  });
+
+  /* =====================================================================
+     トースト
+     ===================================================================== */
+  function toast(message, kind) {
+    var box = el('div', 'toast toast--' + (kind || 'ok'));
+    box.appendChild(icon(kind === 'err' ? '#i-alert'.slice(1) : 'i-check'));
+    box.appendChild(el('span', 'toast__text', message));
+    var close = el('button', 'btn btn--icon toast__close');
+    close.type = 'button';
+    close.appendChild(icon('i-x'));
+    close.appendChild(el('span', 'sr-only', '閉じる'));
+    close.addEventListener('click', function () { box.remove(); });
+    box.appendChild(close);
+    $('toasts').appendChild(box);
+    if (kind !== 'err') setTimeout(function () { box.remove(); }, 4200);
+    else setTimeout(function () { box.remove(); }, 9000);
+  }
+
+  /* =====================================================================
+     API（Netlify の静的ページ → GAS ウェブアプリ）
+     Content-Type を text/plain にして CORS プリフライトを避ける
+     ===================================================================== */
+  function api(action, payload) {
+    if (DEMO) return demoApi(action, payload);
+
+    var url = store(LS.url);
+    var token = store(LS.token);
+    if (!url || !token) return Promise.reject(new Error('接続設定が未完了です。'));
+
+    var body = Object.assign({ action: action, token: token }, payload || {});
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, 30000);
+
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body),
+      redirect: 'follow',
+      signal: controller.signal
+    }).then(function (res) {
+      if (!res.ok) throw new Error('通信に失敗しました（HTTP ' + res.status + '）。');
+      return res.text();
+    }).then(function (text) {
+      var json;
+      try { json = JSON.parse(text); }
+      catch (e) { throw new Error('URL が間違っている可能性があります（応答が JSON ではありません）。'); }
+      if (!json.ok) throw new Error(json.error || '処理に失敗しました。');
+      return json.data;
+    }).catch(function (error) {
+      if (error.name === 'AbortError') throw new Error('応答がありません。通信環境を確認してください。');
+      if (error instanceof TypeError) throw new Error('接続できません。URL とデプロイ設定（アクセスできるユーザー＝全員）を確認してください。');
+      throw error;
+    }).finally(function () { clearTimeout(timer); });
+  }
+
+  /* =====================================================================
+     デモデータ（?demo=1 で GAS なしに動作確認できる）
+     ===================================================================== */
+  var demoRows = [
+    { ID: 'R0004', 登録日: '2026/09/18 10:24', 紹介者名: '佐々木 花子', 電話番号: '080-2222-1111', メール: 'hanako@example.com', 被紹介者: '個人 田中様', ステータス: '対応中', 備考: '知人からの紹介。来週訪問予定。', 更新日: '2026/09/19 09:10' },
+    { ID: 'R0003', 登録日: '2026/09/15 14:02', 紹介者名: '山田 太郎', 電話番号: '090-1111-2222', メール: 'taro@example.com', 被紹介者: '株式会社サンプル 鈴木様', ステータス: '成約', 備考: 'セミナー経由。初回訪問で即決。', 更新日: '2026/09/17 11:45' },
+    { ID: 'R0002', 登録日: '2026/09/11 09:31', 紹介者名: '山田 太郎', 電話番号: '090-1111-2222', メール: 'taro@example.com', 被紹介者: '有限会社テスト 高橋様', ステータス: '未対応', 備考: '', 更新日: '2026/09/11 09:31' },
+    { ID: 'R0001', 登録日: '2026/09/02 16:50', 紹介者名: '鈴木 一郎', 電話番号: '', メール: 'ichiro@example.com', 被紹介者: '個人 渡辺様', ステータス: '見送り', 備考: '時期が合わず見送り。半年後に再連絡。', 更新日: '2026/09/08 13:20' }
+  ];
+  function demoApi(action, payload) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () {
+        try {
+          if (action === 'bootstrap') return resolve({ config: { statuses: state.statuses }, list: demoRows.slice() });
+          if (action === 'list') return resolve(demoRows.slice());
+          if (action === 'add') {
+            var max = demoRows.reduce(function (a, r) { return Math.max(a, Number(r.ID.slice(1))); }, 0);
+            var now = new Date();
+            var row = {
+              ID: 'R' + ('0000' + (max + 1)).slice(-4),
+              登録日: formatNow(now), 更新日: formatNow(now),
+              紹介者名: payload.form.紹介者名, 電話番号: payload.form.電話番号 || '',
+              メール: payload.form.メール || '', 被紹介者: payload.form.被紹介者 || '',
+              ステータス: payload.form.ステータス || '未対応', 備考: payload.form.備考 || ''
+            };
+            demoRows.unshift(row);
+            return resolve(row);
+          }
+          if (action === 'updateStatus') {
+            demoRows.forEach(function (r) { if (r.ID === payload.id) r.ステータス = payload.status; });
+            return resolve({ ID: payload.id });
+          }
+          if (action === 'delete') {
+            demoRows = demoRows.filter(function (r) { return r.ID !== payload.id; });
+            return resolve({ deleted: payload.id });
+          }
+          reject(new Error('demo: 未対応の action'));
+        } catch (e) { reject(e); }
+      }, 260);
+    });
+  }
+  function formatNow(d) {
+    var p = function (n) { return ('0' + n).slice(-2); };
+    return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  /* =====================================================================
+     タブ切り替え
+     ===================================================================== */
+  var TABS = [
+    { id: 'form', tab: 'tab-form', panel: 'panel-form' },
+    { id: 'list', tab: 'tab-list', panel: 'panel-list' },
+    { id: 'summary', tab: 'tab-summary', panel: 'panel-summary' }
+  ];
+  function showView(id, focus) {
+    state.view = id;
+    TABS.forEach(function (t) {
+      var selected = t.id === id;
+      $(t.tab).setAttribute('aria-selected', selected ? 'true' : 'false');
+      $(t.tab).setAttribute('tabindex', selected ? '0' : '-1');
+      $(t.panel).hidden = !selected;
+    });
+    if (id === 'summary') renderSummary();
+    if (focus) $('panel-' + id).focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  TABS.forEach(function (t, index) {
+    $(t.tab).addEventListener('click', function () { showView(t.id); });
+    $(t.tab).addEventListener('keydown', function (event) {
+      var dir = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (!dir) return;
+      event.preventDefault();
+      var next = TABS[(index + dir + TABS.length) % TABS.length];
+      $(next.tab).focus();
+      showView(next.id);
+    });
+  });
+
+  /* =====================================================================
+     フィルタ・並び替え
+     ===================================================================== */
+  function visibleRows() {
+    var keyword = state.query.trim().toLowerCase();
+    var rows = state.rows.filter(function (row) {
+      if (state.status && row.ステータス !== state.status) return false;
+      if (!keyword) return true;
+      return ['紹介者名', '被紹介者', '電話番号', 'メール', '備考', 'ID'].some(function (key) {
+        return String(row[key] || '').toLowerCase().indexOf(keyword) !== -1;
+      });
+    });
+    if (state.sort === 'name') {
+      rows.sort(function (a, b) { return String(a.紹介者名).localeCompare(String(b.紹介者名), 'ja'); });
+    } else if (state.sort === 'old') {
+      rows.reverse();
+    }
+    return rows;
+  }
+
+  function renderChips() {
+    var box = $('status-chips');
+    box.textContent = '';
+    var counts = {};
+    state.rows.forEach(function (row) { counts[row.ステータス] = (counts[row.ステータス] || 0) + 1; });
+
+    var options = [{ value: '', label: 'すべて', count: state.rows.length }];
+    state.statuses.forEach(function (status) {
+      options.push({ value: status, label: status, count: counts[status] || 0 });
+    });
+    options.forEach(function (option) {
+      var chip = el('button', 'chip');
+      chip.type = 'button';
+      chip.setAttribute('aria-pressed', state.status === option.value ? 'true' : 'false');
+      chip.appendChild(el('span', null, option.label));
+      chip.appendChild(el('span', 'chip__count', option.count));
+      chip.addEventListener('click', function () {
+        state.status = state.status === option.value ? '' : option.value;
+        renderChips();
+        renderList();
+      });
+      box.appendChild(chip);
+    });
+    chipScrollUpdate();
+  }
+
+  /* =====================================================================
+     一覧の描画
+     ===================================================================== */
+  function applyStatusClass(select, status) {
+    select.className = 'select select--status is-' + (STATUS_CLASS[status] || 'lost');
+  }
+
+  function statusSelect(row) {
+    var select = el('select', 'select');
+    applyStatusClass(select, row.ステータス);
+    select.setAttribute('aria-label', row.紹介者名 + ' のステータス');
+    state.statuses.forEach(function (status) {
+      var option = el('option', null, status);
+      option.value = status;
+      if (status === row.ステータス) option.selected = true;
+      select.appendChild(option);
+    });
+    select.addEventListener('change', function () {
+      var next = select.value;
+      var previous = row.ステータス;
+      select.disabled = true;
+      applyStatusClass(select, next);
+      api('updateStatus', { id: row.ID, status: next }).then(function () {
+        row.ステータス = next;
+        toast(row.ID + ' を「' + next + '」に変更しました。');
+        renderChips();
+        renderList();
+        renderSummary();
+      }).catch(function (error) {
+        select.value = previous;
+        applyStatusClass(select, previous);
+        toast(error.message, 'err');
+      }).finally(function () { select.disabled = false; });
+    });
+    return select;
+  }
+
+  function deleteButton(row) {
+    var button = el('button', 'btn btn--icon');
+    button.type = 'button';
+    button.title = '削除';
+    button.appendChild(icon('i-trash'));
+    button.appendChild(el('span', 'sr-only', row.紹介者名 + ' を削除'));
+    button.addEventListener('click', function () { confirmDelete(row); });
+    return button;
+  }
+
+  function renderTable(rows) {
+    var body = $('table-body');
+    body.textContent = '';
+    rows.forEach(function (row) {
+      var tr = el('tr');
+      tr.appendChild(el('td', 'cell-id', row.ID));
+      tr.appendChild(el('td', 'cell-date', row.登録日));
+      tr.appendChild(el('td', 'cell-name', row.紹介者名));
+
+      var contact = el('td');
+      if (row.電話番号) {
+        var tel = el('div');
+        var telLink = el('a', null, row.電話番号);
+        telLink.href = 'tel:' + String(row.電話番号).replace(/[^\d+]/g, '');
+        tel.appendChild(telLink);
+        contact.appendChild(tel);
+      }
+      if (row.メール) {
+        var mail = el('div');
+        var mailLink = el('a', null, row.メール);
+        mailLink.href = 'mailto:' + row.メール;
+        mail.appendChild(mailLink);
+        contact.appendChild(mail);
+      }
+      if (!row.電話番号 && !row.メール) contact.appendChild(el('span', 'cell-date', '—'));
+      tr.appendChild(contact);
+
+      tr.appendChild(el('td', null, row.被紹介者 || '—'));
+      var statusCell = el('td');
+      statusCell.appendChild(statusSelect(row));
+      tr.appendChild(statusCell);
+      tr.appendChild(el('td', 'cell-note', row.備考 || '—'));
+      var actions = el('td', 'cell-actions');
+      actions.appendChild(deleteButton(row));
+      tr.appendChild(actions);
+      body.appendChild(tr);
+    });
+  }
+
+  function renderCards(rows) {
+    var box = $('list-cards');
+    box.textContent = '';
+    rows.forEach(function (row) {
+      var card = el('div', 'row-card');
+
+      var top = el('div', 'row-card__top');
+      var names = el('div');
+      names.style.flex = '1 1 auto';
+      names.style.minWidth = '0';
+      names.appendChild(el('div', 'row-card__name', row.紹介者名));
+      names.appendChild(el('div', 'row-card__id', row.ID + ' ・ ' + row.登録日));
+      top.appendChild(names);
+      card.appendChild(top);
+
+      var meta = el('div', 'row-card__meta');
+      function addMeta(iconName, value, href) {
+        if (!value) return;
+        var line = el('div', 'meta-line');
+        line.appendChild(icon(iconName, 'meta-line__icon'));
+        var wrap = el('div', 'meta-line__value');
+        if (href) {
+          var link = el('a', null, value);
+          link.href = href;
+          wrap.appendChild(link);
+        } else {
+          wrap.textContent = value;
+        }
+        line.appendChild(wrap);
+        meta.appendChild(line);
+      }
+      addMeta('i-arrow', row.被紹介者);
+      addMeta('i-phone', row.電話番号, row.電話番号 ? 'tel:' + String(row.電話番号).replace(/[^\d+]/g, '') : null);
+      addMeta('i-mail', row.メール, row.メール ? 'mailto:' + row.メール : null);
+      addMeta('i-note', row.備考);
+      if (meta.childNodes.length) card.appendChild(meta);
+
+      var foot = el('div', 'row-card__foot');
+      foot.appendChild(el('span', 'row-card__foot-label', 'ステータス'));
+      foot.appendChild(statusSelect(row));
+      foot.appendChild(deleteButton(row));
+      card.appendChild(foot);
+
+      box.appendChild(card);
+    });
+  }
+
+  function emptyState(parent, title, text, actionLabel, onAction) {
+    parent.textContent = '';
+    var box = el('div', 'empty');
+    var iconBox = el('div', 'empty__icon');
+    iconBox.appendChild(icon('i-inbox'));
+    box.appendChild(iconBox);
+    box.appendChild(el('p', 'empty__title', title));
+    box.appendChild(el('p', 'empty__text', text));
+    if (actionLabel) {
+      var button = el('button', 'btn btn--ghost empty__action', actionLabel);
+      button.type = 'button';
+      button.addEventListener('click', onAction);
+      box.appendChild(button);
+    }
+    parent.appendChild(box);
+    parent.hidden = false;
+  }
+
+  function renderList() {
+    var rows = visibleRows();
+    var hasRows = rows.length > 0;
+
+    $('table-wrap').hidden = !hasRows;
+    $('list-cards').hidden = !hasRows;
+    $('list-empty').hidden = true;
+    $('result-count').textContent = state.rows.length ? rows.length + ' 件 / 全 ' + state.rows.length + ' 件' : '';
+    var badgeEl = $('tab-count');
+    badgeEl.textContent = state.rows.length;
+    badgeEl.hidden = state.rows.length === 0;
+
+    if (!hasRows) {
+      if (!state.rows.length) {
+        emptyState($('list-empty'), 'まだ登録がありません',
+          '「新規登録」から最初の紹介者を追加してください。', '新規登録を開く',
+          function () { showView('form', true); });
+      } else {
+        emptyState($('list-empty'), '条件に合うデータがありません',
+          '検索キーワードやステータスの絞り込みを変えてみてください。', '条件をリセット', function () {
+            state.query = ''; state.status = '';
+            $('q').value = ''; $('btn-clear-q').hidden = true;
+            renderChips(); renderList();
+          });
+      }
+      return;
+    }
+    renderTable(rows);
+    renderCards(rows);
+  }
+
+  /* =====================================================================
+     集計の描画（手元の rows から計算する＝往復なしで即反映）
+     ===================================================================== */
+  function computeSummary() {
+    var byStatus = {};
+    state.statuses.forEach(function (status) { byStatus[status] = 0; });
+    var map = {};
+    state.rows.forEach(function (row) {
+      var status = row.ステータス || state.statuses[0];
+      byStatus[status] = (byStatus[status] || 0) + 1;
+      var name = row.紹介者名 || '(未入力)';
+      if (!map[name]) {
+        map[name] = { name: name, total: 0, counts: {} };
+        state.statuses.forEach(function (s) { map[name].counts[s] = 0; });
+      }
+      map[name].total += 1;
+      map[name].counts[status] = (map[name].counts[status] || 0) + 1;
+    });
+    var ranking = Object.keys(map).map(function (name) { return map[name]; })
+      .sort(function (a, b) { return b.total - a.total || a.name.localeCompare(b.name, 'ja'); });
+    return { total: state.rows.length, byStatus: byStatus, ranking: ranking };
+  }
+
+  function renderSummary() {
+    var summary = computeSummary();
+    var kpis = $('kpis');
+    kpis.textContent = '';
+
+    function kpi(label, value, className, dotVar) {
+      var card = el('div', 'kpi' + (className ? ' ' + className : ''));
+      var labelBox = el('div', 'kpi__label');
+      if (dotVar) {
+        var dot = el('span', 'kpi__dot');
+        dot.style.background = dotVar;
+        labelBox.appendChild(dot);
+      }
+      labelBox.appendChild(el('span', null, label));
+      card.appendChild(labelBox);
+      var valueBox = el('div', 'kpi__value', value);
+      valueBox.appendChild(el('span', 'kpi__unit', '件'));
+      card.appendChild(valueBox);
+      return card;
+    }
+    kpis.appendChild(kpi('紹介 合計', summary.total, 'kpi--total'));
+    var dotColor = { '未対応': 'var(--warn-text)', '対応中': 'var(--info-text)', '成約': 'var(--ok-text)', '見送り': 'var(--neutral-text)' };
+    state.statuses.forEach(function (status) {
+      kpis.appendChild(kpi(status, summary.byStatus[status] || 0, null, dotColor[status] || 'var(--neutral-text)'));
+    });
+
+    var rank = $('rank');
+    rank.textContent = '';
+    $('summary-empty').hidden = true;
+    if (!summary.ranking.length) {
+      rank.hidden = true;
+      emptyState($('summary-empty'), 'まだ集計できるデータがありません',
+        '紹介者を登録すると、ここに紹介件数と成約数が並びます。');
+      return;
+    }
+    rank.hidden = false;
+
+    var max = summary.ranking[0].total || 1;
+    summary.ranking.forEach(function (item, index) {
+      var box = el('div', 'rank__item');
+      var head = el('div', 'rank__head');
+      head.appendChild(el('span', 'rank__no', '#' + (index + 1)));
+      head.appendChild(el('span', 'rank__name', item.name));
+      var count = el('span', 'rank__count', item.total);
+      count.appendChild(el('span', null, ' 件'));
+      head.appendChild(count);
+      box.appendChild(head);
+
+      var bar = el('div', 'bar');
+      bar.setAttribute('role', 'img');
+      var label = item.name + ' の内訳：';
+      state.statuses.forEach(function (status) {
+        var value = item.counts[status] || 0;
+        if (!value) return;
+        var seg = el('span', 'bar__seg bar__seg--' + (STATUS_CLASS[status] || 'lost'));
+        seg.style.width = (value / max * 100) + '%';
+        bar.appendChild(seg);
+        label += status + ' ' + value + '件 ';
+      });
+      bar.setAttribute('aria-label', label);
+      box.appendChild(bar);
+
+      var legend = el('div', 'rank__legend');
+      state.statuses.forEach(function (status) {
+        var value = item.counts[status] || 0;
+        if (!value) return;
+        var span = el('span');
+        var dot = el('i');
+        dot.style.background = dotColor[status] || 'var(--neutral-text)';
+        span.appendChild(dot);
+        span.appendChild(el('span', null, status + ' ' + value));
+        legend.appendChild(span);
+      });
+      box.appendChild(legend);
+      rank.appendChild(box);
+    });
+  }
+
+  /* =====================================================================
+     読み込み
+     ===================================================================== */
+  function setLoading(on) {
+    state.loading = on;
+    $('list-skeleton').hidden = !on;
+    $('list-region').hidden = on;
+    var refresh = $('btn-refresh');
+    refresh.disabled = on;
+    refresh.style.opacity = on ? '.5' : '';
+  }
+
+  function loadAll(options) {
+    var silent = options && options.silent;
+    if (!silent) setLoading(true);
+    return api('bootstrap', {}).then(function (data) {
+      if (data.config && data.config.statuses && data.config.statuses.length) {
+        state.statuses = data.config.statuses;
+        fillStatusSelect();
+      }
+      state.rows = data.list || [];
+      renderChips();
+      renderList();
+      if (state.view === 'summary') renderSummary();
+    }).catch(function (error) {
+      toast(error.message, 'err');
+      emptyState($('list-empty'), '読み込めませんでした', error.message, '再試行', function () { loadAll(); });
+      $('table-wrap').hidden = true;
+      $('list-cards').hidden = true;
+    }).finally(function () { setLoading(false); });
+  }
+
+  function fillStatusSelect() {
+    var select = $('f-status');
+    select.textContent = '';
+    state.statuses.forEach(function (status) {
+      var option = el('option', null, status);
+      option.value = status;
+      select.appendChild(option);
+    });
+  }
+
+  /* =====================================================================
+     登録
+     ===================================================================== */
+  $('form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var nameInput = $('f-name');
+    var name = nameInput.value.trim();
+    if (!name) {
+      nameInput.setAttribute('aria-invalid', 'true');
+      $('f-name-error').hidden = false;
+      nameInput.focus();
+      return;
+    }
+    nameInput.removeAttribute('aria-invalid');
+    $('f-name-error').hidden = true;
+
+    var button = $('btn-save');
+    var label = button.querySelector('span');
+    var original = label.textContent;
+    button.disabled = true;
+    label.textContent = '登録中...';
+
+    api('add', {
+      form: {
+        '紹介者名': name,
+        '電話番号': $('f-tel').value.trim(),
+        'メール': $('f-mail').value.trim(),
+        '被紹介者': $('f-target').value.trim(),
+        'ステータス': $('f-status').value,
+        '備考': $('f-note').value.trim()
+      }
+    }).then(function (saved) {
+      state.rows.unshift(saved);
+      $('form').reset();
+      fillStatusSelect();
+      renderChips();
+      renderList();
+      toast(saved.ID + '「' + saved.紹介者名 + '」を登録しました。');
+      showView('list');
+    }).catch(function (error) {
+      toast(error.message, 'err');
+    }).finally(function () {
+      button.disabled = false;
+      label.textContent = original;
+    });
+  });
+
+  $('form').addEventListener('reset', function () {
+    $('f-name').removeAttribute('aria-invalid');
+    $('f-name-error').hidden = true;
+  });
+  $('f-name').addEventListener('input', function () {
+    if ($('f-name').value.trim()) {
+      $('f-name').removeAttribute('aria-invalid');
+      $('f-name-error').hidden = true;
+    }
+  });
+
+  /* =====================================================================
+     削除
+     ===================================================================== */
+  var pendingDelete = null;
+  function confirmDelete(row) {
+    pendingDelete = row;
+    $('dlg-delete-target').textContent = row.ID + '「' + row.紹介者名 + '」' +
+      (row.被紹介者 ? '（被紹介者：' + row.被紹介者 + '）' : '');
+    openDialog($('dlg-delete'));
+  }
+  $('btn-delete-ok').addEventListener('click', function () {
+    var row = pendingDelete;
+    if (!row) return;
+    var button = $('btn-delete-ok');
+    button.disabled = true;
+    api('delete', { id: row.ID }).then(function () {
+      state.rows = state.rows.filter(function (r) { return r.ID !== row.ID; });
+      renderChips();
+      renderList();
+      renderSummary();
+      toast(row.ID + ' を削除しました。');
+      $('dlg-delete').close();
+    }).catch(function (error) {
+      toast(error.message, 'err');
+    }).finally(function () {
+      button.disabled = false;
+      pendingDelete = null;
+    });
+  });
+
+  /* =====================================================================
+     検索・並び替え
+     ===================================================================== */
+  var searchTimer = null;
+  $('q').addEventListener('input', function () {
+    $('btn-clear-q').hidden = !$('q').value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.query = $('q').value;
+      renderList();
+    }, 180);
+  });
+  $('btn-clear-q').addEventListener('click', function () {
+    $('q').value = '';
+    state.query = '';
+    $('btn-clear-q').hidden = true;
+    $('q').focus();
+    renderList();
+  });
+  (function watchChipScroll() {
+    var box = $('status-chips');
+    var update = function () {
+      var atEnd = box.scrollLeft + box.clientWidth >= box.scrollWidth - 2;
+      box.classList.toggle('is-scroll-end', atEnd);
+    };
+    box.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    chipScrollUpdate = update;
+    update();
+  })();
+
+  $('sort').addEventListener('change', function () {
+    state.sort = $('sort').value;
+    renderList();
+  });
+  $('btn-refresh').addEventListener('click', function () {
+    if (!state.connected) { openDialog($('dlg-settings')); return; }
+    loadAll();
+  });
+
+  /* =====================================================================
+     ダイアログ（<dialog> 非対応ブラウザでも最低限動くように）
+     ===================================================================== */
+  function openDialog(dialog) {
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  /* =====================================================================
+     接続設定
+     ===================================================================== */
+  function updateConnLabel() {
+    var label = $('conn-label');
+    if (DEMO) { label.textContent = 'デモモード（保存されません）'; return; }
+    var url = store(LS.url);
+    label.textContent = url ? 'スプレッドシートに接続中' : '未接続';
+  }
+
+  $('btn-settings').addEventListener('click', function () {
+    $('s-url').value = store(LS.url) || '';
+    $('s-token').value = store(LS.token) || '';
+    $('s-error').hidden = true;
+    $('btn-disconnect').hidden = !(store(LS.url) || store(LS.token));
+    openDialog($('dlg-settings'));
+  });
+  $('btn-open-settings').addEventListener('click', function () { $('btn-settings').click(); });
+
+  $('btn-connect').addEventListener('click', function () {
+    var url = $('s-url').value.trim();
+    var token = $('s-token').value.trim();
+    var error = $('s-error');
+
+    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)) {
+      error.textContent = 'Apps Script のウェブアプリ URL（https://script.google.com/... ）を入れてください。';
+      error.hidden = false;
+      $('s-url').focus();
+      return;
+    }
+    if (!token) {
+      error.textContent = '合言葉を入力してください。';
+      error.hidden = false;
+      $('s-token').focus();
+      return;
+    }
+    error.hidden = true;
+
+    if (DEMO) {
+      // デモ表示のままでは実データに繋がらないので、?demo=1 を外して開き直す
+      store(LS.url, url);
+      store(LS.token, token);
+      location.href = location.pathname;
+      return;
+    }
+
+    var button = $('btn-connect');
+    var label = button.querySelector('span');
+    button.disabled = true;
+    label.textContent = '接続を確認中...';
+
+    store(LS.url, url);
+    store(LS.token, token);
+
+    api('config', {}).then(function (data) {
+      if (data && data.statuses) { state.statuses = data.statuses; fillStatusSelect(); }
+      state.connected = true;
+      updateConnLabel();
+      $('panel-setup').hidden = true;
+      $('dlg-settings').close();
+      toast('接続しました。');
+      showView('list');
+      loadAll();
+    }).catch(function (err) {
+      state.connected = false;
+      error.textContent = err.message;
+      error.hidden = false;
+    }).finally(function () {
+      button.disabled = false;
+      label.textContent = '接続する';
+    });
+  });
+
+  $('btn-disconnect').addEventListener('click', function () {
+    store(LS.url, null);
+    store(LS.token, null);
+    state.connected = false;
+    state.rows = [];
+    renderChips();
+    renderList();
+    updateConnLabel();
+    $('dlg-settings').close();
+    $('panel-setup').hidden = false;
+    TABS.forEach(function (t) { $(t.panel).hidden = true; });
+    toast('接続を解除しました。');
+  });
+
+  /* =====================================================================
+     起動
+     ===================================================================== */
+  fillStatusSelect();
+  updateConnLabel();
+  renderChips();
+
+  if (DEMO || (store(LS.url) && store(LS.token))) {
+    state.connected = true;
+    $('panel-setup').hidden = true;
+    showView('list');
+    loadAll();
+  } else {
+    $('panel-setup').hidden = false;
+    TABS.forEach(function (t) { $(t.panel).hidden = true; });
+    renderList();
+  }
+})();
+</script>
+</body>
+</html>

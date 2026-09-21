@@ -1,0 +1,16 @@
+{
+  "name": "dairitenkanri",
+  "private": true,
+  "version": "1.0.0",
+  "description": "紹介者管理アプリ（GAS バックエンド + Netlify 静的フロント）",
+  "scripts": {
+    "test": "node test/smoke.js && node tools/api-contract-test.mjs",
+    "test:logic": "node test/smoke.js",
+    "test:api": "node tools/api-contract-test.mjs",
+    "audit": "node tools/audit-ui.mjs",
+    "audit:shots": "node tools/audit-ui.mjs --shots"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}
