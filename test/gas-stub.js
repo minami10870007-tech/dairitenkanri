@@ -35,26 +35,49 @@ function makeSheet(name) {
 }
 
 const sheets = {};
+const spreadsheet = {
+  getName: () => '紹介者管理テスト',
+  getSheetByName: (n) => sheets[n] || null,
+  insertSheet: (n) => (sheets[n] = makeSheet(n)),
+  getUrl: () => 'https://docs.google.com/spreadsheets/d/dummy/edit',
+};
 const sandbox = {
   console,
   SpreadsheetApp: {
-    getActiveSpreadsheet: () => ({
-      getSheetByName: (n) => sheets[n] || null,
-      insertSheet: (n) => (sheets[n] = makeSheet(n)),
-      getUrl: () => 'https://docs.google.com/spreadsheets/d/dummy/edit',
-    }),
+    getActiveSpreadsheet: () => spreadsheet,
+    openById: () => spreadsheet,
     getUi: () => { throw new Error('no ui'); },
     newDataValidation: () => ({
       requireValueInList: () => ({ setAllowInvalid: () => ({ build: () => ({}) }) }),
     }),
   },
   LockService: { getDocumentLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) },
+  PropertiesService: (() => {
+    const props = {};
+    const store = {
+      getProperty: (k) => (k in props ? props[k] : null),
+      setProperty: (k, v) => { props[k] = String(v); return store; },
+      deleteProperty: (k) => { delete props[k]; return store; },
+    };
+    return { getScriptProperties: () => store };
+  })(),
+  Logger: { log: () => {} },
   Utilities: {
     formatDate: (d) => `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} 00:00`,
+    getUuid: () => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   },
   Session: { getScriptTimeZone: () => 'Asia/Tokyo' },
   HtmlService: {},
+  ContentService: {
+    MimeType: { JSON: 'application/json' },
+    createTextOutput: (text) => {
+      const out = { setMimeType: () => out, getContent: () => text };
+      return out;
+    },
+  },
 };
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync(require('path').join(__dirname, '..', 'src', 'Code.gs'), 'utf8'), sandbox);
+const path = require('path');
+vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'Code.gs'), 'utf8'), sandbox);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'Api.gs'), 'utf8'), sandbox);
 module.exports = sandbox;

@@ -14,6 +14,14 @@ const HEADERS = ['ID', '登録日', '紹介者名', '電話番号', 'メール',
 /** ステータスの選択肢 */
 const STATUSES = ['未対応', '対応中', '成約', '見送り'];
 
+/**
+ * 書き込み先スプレッドシートを指定するスクリプトプロパティのキー。
+ * スプレッドシートの「拡張機能 → Apps Script」から作った場合は設定不要
+ * （そのスプレッドシートが自動的に対象になる）。
+ * 独立したスクリプトから使うときだけ、ここにスプレッドシートの ID を入れる。
+ */
+const SPREADSHEET_ID_KEY = 'SPREADSHEET_ID';
+
 /* -------------------------------------------------------------------------
  * 画面の入り口
  * ---------------------------------------------------------------------- */
@@ -28,6 +36,7 @@ function onOpen() {
     .addSeparator()
     .addItem('外部連携用の合言葉を発行', 'issueApiToken')
     .addItem('外部連携用の合言葉を確認', 'showApiToken')
+    .addItem('接続状況を確認', 'showConnection')
     .addToUi();
 }
 
@@ -72,9 +81,23 @@ function setup() {
   return sheet.getName();
 }
 
+/** 書き込み先のスプレッドシートを取得する */
+function getSpreadsheet_() {
+  const id = PropertiesService.getScriptProperties().getProperty(SPREADSHEET_ID_KEY);
+  if (id) {
+    return SpreadsheetApp.openById(id); // 独立スクリプトから使う場合
+  }
+  const active = SpreadsheetApp.getActiveSpreadsheet(); // スプレッドシートに紐づいた場合
+  if (!active) {
+    throw new Error('スプレッドシートが見つかりません。スプレッドシートの「拡張機能 → Apps Script」から作るか、'
+      + 'プロジェクトの設定でスクリプトプロパティ ' + SPREADSHEET_ID_KEY + ' にスプレッドシートの ID を設定してください。');
+  }
+  return active;
+}
+
 /** データシートを取得する（無ければ作成して整える） */
 function getSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet_();
   const sheet = ss.getSheetByName(SHEET_NAME);
   return sheet ? sheet : initSheet_(ss.insertSheet(SHEET_NAME));
 }
@@ -113,10 +136,36 @@ function getUi_() {
 
 /** 画面の初期表示に必要な情報を返す */
 function getConfig() {
+  const ss = getSpreadsheet_();
   return {
     statuses: STATUSES,
-    sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl()
+    sheetUrl: ss.getUrl(),
+    spreadsheetName: ss.getName()
   };
+}
+
+/**
+ * いまどのスプレッドシートに繋がっているかを表示する（連携できているかの確認用）。
+ */
+function showConnection() {
+  const ss = getSpreadsheet_();
+  const sheet = getSheet_();
+  const rows = Math.max(sheet.getLastRow() - 1, 0);
+  const token = PropertiesService.getScriptProperties().getProperty(API_TOKEN_KEY);
+
+  const message = [
+    'スプレッドシート: ' + ss.getName(),
+    'シート: ' + sheet.getName() + '（' + rows + ' 件）',
+    'URL: ' + ss.getUrl(),
+    '外部連携の合言葉: ' + (token ? '発行済み' : '未発行（Netlify から使うなら発行が必要）'),
+    '',
+    'ウェブアプリの URL は Apps Script の「デプロイ → デプロイを管理」で確認できます。'
+  ].join('\n');
+
+  const ui = getUi_();
+  if (ui) ui.alert('接続状況', message, ui.ButtonSet.OK);
+  Logger.log(message);
+  return message;
 }
 
 /**

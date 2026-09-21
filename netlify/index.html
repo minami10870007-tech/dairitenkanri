@@ -1116,7 +1116,8 @@ dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px);
     sort: 'new',
     view: 'list',
     loading: false,
-    connected: false
+    connected: false,
+    spreadsheetName: ''
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -1648,6 +1649,7 @@ dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px);
         state.statuses = data.config.statuses;
         fillStatusSelect();
       }
+      if (data.config && data.config.spreadsheetName) updateConnLabel(data.config.spreadsheetName);
       state.rows = data.list || [];
       renderChips();
       renderList();
@@ -1809,11 +1811,13 @@ dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px);
   /* =====================================================================
      接続設定
      ===================================================================== */
-  function updateConnLabel() {
+  function updateConnLabel(spreadsheetName) {
     var label = $('conn-label');
     if (DEMO) { label.textContent = 'デモモード（保存されません）'; return; }
+    if (spreadsheetName) { state.spreadsheetName = spreadsheetName; }
     var url = store(LS.url);
-    label.textContent = url ? 'スプレッドシートに接続中' : '未接続';
+    if (!url) { label.textContent = '未接続'; return; }
+    label.textContent = state.spreadsheetName ? state.spreadsheetName + ' に接続中' : 'スプレッドシートに接続中';
   }
 
   $('btn-settings').addEventListener('click', function () {
@@ -1863,7 +1867,7 @@ dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px);
     api('config', {}).then(function (data) {
       if (data && data.statuses) { state.statuses = data.statuses; fillStatusSelect(); }
       state.connected = true;
-      updateConnLabel();
+      updateConnLabel(data && data.spreadsheetName);
       $('panel-setup').hidden = true;
       $('dlg-settings').close();
       toast('接続しました。');
@@ -1884,6 +1888,7 @@ dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px);
     store(LS.token, null);
     state.connected = false;
     state.rows = [];
+    state.spreadsheetName = '';
     renderChips();
     renderList();
     updateConnLabel();

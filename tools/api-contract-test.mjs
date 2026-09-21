@@ -36,8 +36,8 @@ const api = http.createServer((req, res) => {
     const reply = (data) => res.writeHead(200, cors).end(JSON.stringify({ ok: true, data }));
     const statuses = ['未対応', '対応中', '成約', '見送り'];
     switch (request.action) {
-      case 'bootstrap': return reply({ config: { statuses }, list: rows.slice().reverse() });
-      case 'config': return reply({ statuses });
+      case 'bootstrap': return reply({ config: { statuses, spreadsheetName: '紹介者管理シート' }, list: rows.slice().reverse() });
+      case 'config': return reply({ statuses, spreadsheetName: '紹介者管理シート' });
       case 'add': {
         const id = 'R' + ('0000' + (rows.length + 1)).slice(-4);
         const row = { ID: id, 登録日: '2026/09/21 12:00', 更新日: '2026/09/21 12:00', 紹介者名: request.form.紹介者名, 電話番号: request.form.電話番号 || '', メール: request.form.メール || '', 被紹介者: request.form.被紹介者 || '', ステータス: request.form.ステータス || '未対応', 備考: request.form.備考 || '' };
@@ -98,6 +98,7 @@ check('Content-Type が text/plain', requests.every((r) => r.method !== 'POST' |
 console.log('画面の動き');
 check('保存済みの接続情報で自動的に一覧が出る', (await page.locator('.row-card__name').count()) === 1);
 check('既存データの名前が出ている', (await page.locator('.row-card__name').first().innerText()) === '既存 太郎');
+check('接続先のスプレッドシート名が出る', (await page.locator('#conn-label').innerText()).includes('紹介者管理シート'));
 
 await page.click('#tab-form');
 await page.fill('#f-name', '新規 花子');

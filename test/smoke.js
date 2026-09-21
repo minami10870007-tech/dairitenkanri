@@ -51,3 +51,44 @@ assert.strictEqual(s.addReferrer({ '紹介者名': '新規 次郎' }).ID, 'R0004
 assert.throws(() => s.deleteReferrer('R0002'), /見つかりません/);
 
 console.log('全テスト通過:', s.listReferrers('', '').length, '件');
+
+/* ---------------------------------------------------------------------------
+ * 外部連携（Api.gs の doPost）
+ * ------------------------------------------------------------------------ */
+const post = (payload) => JSON.parse(s.doPost({ postData: { contents: JSON.stringify(payload) } }).getContent());
+
+// 合言葉が未発行のうちは誰も通さない
+assert.strictEqual(post({ action: 'bootstrap' }).ok, false);
+assert.match(post({ action: 'bootstrap' }).error, /未発行/);
+
+const token = s.issueApiToken();
+assert.strictEqual(typeof token, 'string');
+assert.strictEqual(post({ action: 'bootstrap', token: 'wrong' }).ok, false);
+assert.match(post({ action: 'bootstrap', token: 'wrong' }).error, /合言葉が違います/);
+
+// 正しい合言葉なら、画面が必要とする3点セットが返る
+const boot = post({ action: 'bootstrap', token: token });
+assert.strictEqual(boot.ok, true);
+assert.strictEqual(boot.data.config.spreadsheetName, '紹介者管理テスト', '接続先のスプレッドシート名を返す');
+assert.strictEqual(JSON.stringify(boot.data.config.statuses), JSON.stringify(['未対応', '対応中', '成約', '見送り']));
+assert.strictEqual(boot.data.list.length, s.listReferrers('', '').length);
+assert.strictEqual(boot.data.summary.total, boot.data.list.length);
+
+// 登録・ステータス変更・削除も API 経由で通る
+const created = post({ action: 'add', token: token, form: { '紹介者名': 'API 経由' } });
+assert.strictEqual(created.ok, true);
+assert.strictEqual(created.data.紹介者名, 'API 経由');
+assert.strictEqual(post({ action: 'updateStatus', token: token, id: created.data.ID, status: '成約' }).data.ステータス, '成約');
+assert.strictEqual(post({ action: 'delete', token: token, id: created.data.ID }).ok, true);
+assert.strictEqual(post({ action: 'なにこれ', token: token }).ok, false);
+
+// 空リクエストや壊れた JSON でも落ちない
+assert.strictEqual(JSON.parse(s.doPost({}).getContent()).ok, false);
+assert.strictEqual(JSON.parse(s.doPost({ postData: { contents: '{' } }).getContent()).ok, false);
+
+// 接続状況の表示に、書き込み先が出る
+const connection = s.showConnection();
+assert.match(connection, /紹介者管理テスト/);
+assert.match(connection, /発行済み/);
+
+console.log('外部連携（doPost）も通過');

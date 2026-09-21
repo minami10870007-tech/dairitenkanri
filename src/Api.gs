@@ -73,14 +73,14 @@ function verifyToken_(token) {
 /** action ごとに処理を振り分ける */
 function handleAction_(request) {
   switch (request.action) {
-    case 'bootstrap': // 初回表示用：3つまとめて返して往復を減らす
+    case 'bootstrap': // 初回表示用：まとめて返して往復を減らす
       return {
-        config: { statuses: STATUSES },
+        config: getConfig(),
         list: listReferrers('', ''),
         summary: getSummary()
       };
     case 'config':
-      return { statuses: STATUSES };
+      return getConfig();
     case 'list':
       return listReferrers(request.query, request.status);
     case 'add':
