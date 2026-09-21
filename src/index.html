@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --line: #dadce0;
+        --text: #202124;
+        --muted: #5f6368;
+        --accent: #1a73e8;
+        --bg: #ffffff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 16px;
+        font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        font-size: 14px;
+      }
+      h1 { font-size: 18px; margin: 0 0 12px; }
+      .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+      .tab {
+        padding: 8px 14px; cursor: pointer; border: none; background: none;
+        font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent;
+      }
+      .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
+      .panel { display: none; }
+      .panel.active { display: block; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap: 12px; }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+      input, select, textarea {
+        width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 4px;
+        font-size: 14px; font-family: inherit;
+      }
+      textarea { min-height: 64px; resize: vertical; }
+      .full { grid-column: 1 / -1; }
+      .actions { margin-top: 16px; display: flex; gap: 8px; align-items: center; }
+      button.primary {
+        background: var(--accent); color: #fff; border: none; border-radius: 4px;
+        padding: 9px 18px; font-size: 14px; cursor: pointer;
+      }
+      button.ghost {
+        background: #fff; color: var(--accent); border: 1px solid var(--line);
+        border-radius: 4px; padding: 9px 14px; font-size: 14px; cursor: pointer;
+      }
+      button:disabled { opacity: .5; cursor: default; }
+      .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+      .filters input { flex: 1 1 220px; }
+      .filters select { flex: 0 0 140px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { font-size: 12px; color: var(--muted); font-weight: bold; white-space: nowrap; }
+      td.num { white-space: nowrap; }
+      td select { padding: 4px; font-size: 13px; }
+      .link { color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font-size: 13px; padding: 0; }
+      .msg { margin: 12px 0; padding: 10px 12px; border-radius: 4px; display: none; }
+      .msg.ok { display: block; background: #e6f4ea; color: #137333; }
+      .msg.err { display: block; background: #fce8e6; color: #c5221f; }
+      .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+      .cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+      .card { border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; min-width: 110px; }
+      .card .n { font-size: 22px; font-weight: bold; }
+      .card .t { font-size: 12px; color: var(--muted); }
+      .footer { margin-top: 20px; font-size: 12px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <h1>紹介者管理</h1>
+
+    <div class="tabs">
+      <button class="tab active" data-panel="form">新規登録</button>
+      <button class="tab" data-panel="list">一覧・検索</button>
+      <button class="tab" data-panel="summary">集計</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- 新規登録 -->
+    <div class="panel active" id="panel-form">
+      <div class="grid">
+        <div>
+          <label for="f-name">紹介者名（必須）</label>
+          <input id="f-name" type="text" placeholder="山田 太郎" />
+        </div>
+        <div>
+          <label for="f-status">ステータス</label>
+          <select id="f-status"></select>
+        </div>
+        <div>
+          <label for="f-tel">電話番号</label>
+          <input id="f-tel" type="text" placeholder="090-0000-0000" />
+        </div>
+        <div>
+          <label for="f-mail">メール</label>
+          <input id="f-mail" type="text" placeholder="taro@example.com" />
+        </div>
+        <div class="full">
+          <label for="f-target">被紹介者（紹介された人・会社）</label>
+          <input id="f-target" type="text" placeholder="株式会社サンプル 鈴木様" />
+        </div>
+        <div class="full">
+          <label for="f-note">備考</label>
+          <textarea id="f-note" placeholder="紹介の経緯やメモ"></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="btn-save">登録する</button>
+        <button class="ghost" id="btn-clear">クリア</button>
+      </div>
+    </div>
+
+    <!-- 一覧・検索 -->
+    <div class="panel" id="panel-list">
+      <div class="filters">
+        <input id="q" type="text" placeholder="紹介者名・被紹介者・電話・メール・備考で検索" />
+        <select id="q-status"><option value="">すべてのステータス</option></select>
+        <button class="ghost" id="btn-reload">再読み込み</button>
+      </div>
+      <div id="list"></div>
+    </div>
+
+    <!-- 集計 -->
+    <div class="panel" id="panel-summary">
+      <div class="cards" id="summary-cards"></div>
+      <div id="summary-table"></div>
+    </div>
+
+    <div class="footer">
+      データはスプレッドシートの「紹介者」シートに保存されます。
+      <a id="sheet-link" href="#" target="_blank" style="display:none">シートを開く</a>
+    </div>
+
+    <script>
+      var STATUSES = [];
+
+      /** タブ切り替え */
+      document.querySelectorAll('.tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+          document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+          tab.classList.add('active');
+          document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+          if (tab.dataset.panel === 'list') loadList();
+          if (tab.dataset.panel === 'summary') loadSummary();
+        });
+      });
+
+      function showMessage(text, isError) {
+        var el = document.getElementById('msg');
+        el.textContent = text;
+        el.className = 'msg ' + (isError ? 'err' : 'ok');
+        if (!isError) {
+          setTimeout(function () { el.className = 'msg'; }, 4000);
+        }
+      }
+
+      function onError(error) {
+        showMessage(error && error.message ? error.message : '処理に失敗しました。', true);
+      }
+
+      /** 初期化 */
+      google.script.run.withSuccessHandler(function (config) {
+        STATUSES = config.statuses;
+        var formSelect = document.getElementById('f-status');
+        var filterSelect = document.getElementById('q-status');
+        STATUSES.forEach(function (status) {
+          formSelect.appendChild(new Option(status, status));
+          filterSelect.appendChild(new Option(status, status));
+        });
+        if (config.sheetUrl) {
+          var link = document.getElementById('sheet-link');
+          link.href = config.sheetUrl;
+          link.style.display = 'inline';
+        }
+      }).withFailureHandler(onError).getConfig();
+
+      /** 登録 */
+      document.getElementById('btn-save').addEventListener('click', function () {
+        var button = this;
+        var form = {
+          '紹介者名': document.getElementById('f-name').value,
+          '電話番号': document.getElementById('f-tel').value,
+          'メール': document.getElementById('f-mail').value,
+          '被紹介者': document.getElementById('f-target').value,
+          'ステータス': document.getElementById('f-status').value,
+          '備考': document.getElementById('f-note').value
+        };
+        if (!form['紹介者名'].trim()) {
+          showMessage('紹介者名は必須です。', true);
+          return;
+        }
+        button.disabled = true;
+        google.script.run
+          .withSuccessHandler(function (saved) {
+            button.disabled = false;
+            clearForm();
+            showMessage(saved.ID + ' を登録しました。');
+          })
+          .withFailureHandler(function (error) { button.disabled = false; onError(error); })
+          .addReferrer(form);
+      });
+
+      document.getElementById('btn-clear').addEventListener('click', clearForm);
+
+      function clearForm() {
+        ['f-name', 'f-tel', 'f-mail', 'f-target', 'f-note'].forEach(function (id) {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('f-status').selectedIndex = 0;
+      }
+
+      /** 一覧 */
+      var searchTimer = null;
+      document.getElementById('q').addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadList, 300);
+      });
+      document.getElementById('q-status').addEventListener('change', loadList);
+      document.getElementById('btn-reload').addEventListener('click', loadList);
+
+      function loadList() {
+        var container = document.getElementById('list');
+        container.textContent = '読み込み中...';
+        google.script.run
+          .withSuccessHandler(renderList)
+          .withFailureHandler(onError)
+          .listReferrers(document.getElementById('q').value, document.getElementById('q-status').value);
+      }
+
+      function renderList(rows) {
+        var container = document.getElementById('list');
+        container.textContent = '';
+        if (!rows.length) {
+          var empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = '該当するデータはありません。';
+          container.appendChild(empty);
+          return;
+        }
+
+        var table = document.createElement('table');
+        var thead = document.createElement('thead');
+        var headRow = document.createElement('tr');
+        ['ID', '登録日', '紹介者名', '電話番号', 'メール', '被紹介者', 'ステータス', '備考', ''].forEach(function (label) {
+          var th = document.createElement('th');
+          th.textContent = label;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+        rows.forEach(function (row) {
+          var tr = document.createElement('tr');
+          ['ID', '登録日', '紹介者名', '電話番号', 'メール', '被紹介者'].forEach(function (key) {
+            var td = document.createElement('td');
+            td.textContent = row[key];
+            if (key === 'ID' || key === '登録日') td.className = 'num';
+            tr.appendChild(td);
+          });
+
+          // ステータスはその場で変更できる
+          var statusTd = document.createElement('td');
+          var select = document.createElement('select');
+          STATUSES.forEach(function (status) {
+            select.appendChild(new Option(status, status, false, status === row['ステータス']));
+          });
+          select.addEventListener('change', function () {
+            select.disabled = true;
+            google.script.run
+              .withSuccessHandler(function () {
+                select.disabled = false;
+                showMessage(row.ID + ' のステータスを「' + select.value + '」に変更しました。');
+              })
+              .withFailureHandler(function (error) { select.disabled = false; onError(error); })
+              .updateStatus(row.ID, select.value);
+          });
+          statusTd.appendChild(select);
+          tr.appendChild(statusTd);
+
+          var noteTd = document.createElement('td');
+          noteTd.textContent = row['備考'];
+          tr.appendChild(noteTd);
+
+          var actionTd = document.createElement('td');
+          var del = document.createElement('button');
+          del.className = 'link';
+          del.textContent = '削除';
+          del.addEventListener('click', function () {
+            if (!confirm(row.ID + '（' + row['紹介者名'] + '）を削除します。よろしいですか？')) return;
+            del.disabled = true;
+            google.script.run
+              .withSuccessHandler(function () {
+                showMessage(row.ID + ' を削除しました。');
+                loadList();
+              })
+              .withFailureHandler(function (error) { del.disabled = false; onError(error); })
+              .deleteReferrer(row.ID);
+          });
+          actionTd.appendChild(del);
+          tr.appendChild(actionTd);
+
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+      }
+
+      /** 集計 */
+      function loadSummary() {
+        document.getElementById('summary-table').textContent = '読み込み中...';
+        google.script.run
+          .withSuccessHandler(renderSummary)
+          .withFailureHandler(onError)
+          .getSummary();
+      }
+
+      function renderSummary(summary) {
+        var cards = document.getElementById('summary-cards');
+        cards.textContent = '';
+        var items = [{ label: '合計', value: summary.total }];
+        STATUSES.forEach(function (status) {
+          items.push({ label: status, value: summary.byStatus[status] || 0 });
+        });
+        items.forEach(function (item) {
+          var card = document.createElement('div');
+          card.className = 'card';
+          var n = document.createElement('div');
+          n.className = 'n';
+          n.textContent = item.value;
+          var t = document.createElement('div');
+          t.className = 't';
+          t.textContent = item.label;
+          card.appendChild(n);
+          card.appendChild(t);
+          cards.appendChild(card);
+        });
+
+        var container = document.getElementById('summary-table');
+        container.textContent = '';
+        if (!summary.byReferrer.length) {
+          var empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = 'まだデータがありません。';
+          container.appendChild(empty);
+          return;
+        }
+
+        var table = document.createElement('table');
+        var thead = document.createElement('thead');
+        var headRow = document.createElement('tr');
+        ['紹介者名', '紹介件数', '成約', '対応中', '未対応', '見送り'].forEach(function (label) {
+          var th = document.createElement('th');
+          th.textContent = label;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+        summary.byReferrer.forEach(function (row) {
+          var tr = document.createElement('tr');
+          [row['紹介者名'], row['件数'], row['成約'], row['対応中'], row['未対応'], row['見送り']].forEach(function (value) {
+            var td = document.createElement('td');
+            td.textContent = value;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+      }
+    </script>
+  </body>
+</html>
