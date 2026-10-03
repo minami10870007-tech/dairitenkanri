@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f5f6f8; color: #222; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    input[type=text] { flex: 1 1 200px; }
+    input, button { font-size: 16px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
+    button { background: #1a73e8; color: #fff; border: none; cursor: pointer; }
+    button:disabled { opacity: .5; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; }
+    li input[type=checkbox] { width: 20px; height: 20px; }
+    .title { flex: 1; word-break: break-all; }
+    .done .title { text-decoration: line-through; color: #999; }
+    .due { font-size: 13px; color: #666; white-space: nowrap; }
+    .due.over { color: #d93025; font-weight: bold; }
+    .del { background: none; color: #999; padding: 4px 8px; font-size: 18px; }
+    .msg { color: #666; font-size: 14px; }
+    .err { color: #d93025; }
+  </style>
+</head>
+<body>
+  <h1>タスク管理</h1>
+  <form id="form">
+    <input type="text" id="title" placeholder="やること" required>
+    <input type="date" id="due">
+    <button id="addBtn">追加</button>
+  </form>
+  <p id="msg" class="msg">読み込み中…</p>
+  <ul id="list"></ul>
+
+<script>
+  var listEl = document.getElementById('list');
+  var msgEl = document.getElementById('msg');
+
+  function call(fn, args) {
+    msgEl.textContent = '処理中…';
+    msgEl.className = 'msg';
+    var runner = google.script.run
+      .withSuccessHandler(render)
+      .withFailureHandler(function (e) { msgEl.textContent = e.message; msgEl.className = 'msg err'; });
+    runner[fn].apply(runner, args || []);
+  }
+
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  function render(tasks) {
+    listEl.innerHTML = '';
+    var left = tasks.filter(function (t) { return !t.done; }).length;
+    msgEl.textContent = tasks.length ? '残り ' + left + ' 件 / 全 ' + tasks.length + ' 件' : 'タスクはまだありません。';
+    msgEl.className = 'msg';
+    tasks.forEach(function (t) {
+      var li = document.createElement('li');
+      if (t.done) li.className = 'done';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = t.done;
+      cb.onchange = function () { call('toggleTask', [t.id]); };
+
+      var title = document.createElement('span');
+      title.className = 'title';
+      title.textContent = t.title;
+
+      var due = document.createElement('span');
+      due.className = 'due' + (!t.done && t.due && t.due < today() ? ' over' : '');
+      due.textContent = t.due ? t.due.replace(/-/g, '/') : '';
+
+      var del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '×';
+      del.title = '削除';
+      del.onclick = function () { if (confirm('「' + t.title + '」を削除しますか？')) call('deleteTask', [t.id]); };
+
+      li.append(cb, title, due, del);
+      listEl.appendChild(li);
+    });
+  }
+
+  document.getElementById('form').onsubmit = function (e) {
+    e.preventDefault();
+    var title = document.getElementById('title');
+    var due = document.getElementById('due');
+    call('addTask', [title.value, due.value]);
+    title.value = '';
+    due.value = '';
+    title.focus();
+  };
+
+  call('listTasks');
+</script>
+</body>
+</html>
